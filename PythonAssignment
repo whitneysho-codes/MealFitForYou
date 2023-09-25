@@ -1,0 +1,58 @@
+git push origin main
+
+import requests
+
+def recipe_search(ingredient):
+    app_id = '1f15f488'
+    app_key = 'b62434a997bea3119f19df82f3dc9dbc'
+    result = requests.get('https://api.edamam.com/search?q={}&app_id={}&app_key={}'.format(ingredient, app_id, app_key))
+    data = result.json()
+    return data['hits']
+
+def run():
+    ingredient = input('Enter an ingredient: ')
+    print('What type of meal are you looking for: breakfast, brunch, lunch/dinner, snack, teatime)? ')
+    mealtype = input('Type a meal: ')
+    print('What type of cuisine do you fancy?')
+    cuisine = input('Type a cuisine: ')
+
+    try:
+        results = recipe_search(ingredient)
+        recipes = []
+
+        for result in results:
+            recipe = result['recipe']
+
+            if cuisine in recipe.get('cuisineType', []) and mealtype in recipe.get('mealType', []):
+                label = recipe['label']
+                url = recipe['uri']
+                info = (label, url)
+                recipes.append(info)
+                print('You may like this recipe:  {}'.format(label))
+                print(url)
+
+        if not recipes:
+            print('No matching recipes found.')
+
+        myrecipe = input('Select any of these recipes to see ingredients: ')
+
+        for recipe in recipes:
+            label, _ = recipe
+
+            if myrecipe.lower() == label.lower():
+                print('Ingredients for {}:'.format(label))
+                for ingredient in result['recipe']['ingredientLines']:
+                    print(ingredient)
+
+    except requests.exceptions.RequestException as e:
+        print('Error making the API request:', e)
+    except KeyError as e:
+        print('Error parsing API response:', e)
+    except KeyboardInterrupt:
+        print('\nOperation aborted.')
+
+    with open('recipes_cuisine.txt', 'w') as text_cuisine:
+        text_cuisine.write(str(recipes))
+
+if __name__ == "__main__":
+    run()
